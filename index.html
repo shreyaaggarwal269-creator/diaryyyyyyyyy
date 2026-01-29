@@ -160,6 +160,7 @@
         <p>Secret Shared Pages</p>
 
         <!-- LOGIN BUTTONS -->
+         <button onclick="loginWithGoogle()">🔐 Login with Google</button>
         <button onclick="login()">🔐 Login</button>
         <button onclick="logout()">🚪 Logout</button>
 
@@ -193,22 +194,13 @@
   <script type="module">
 
     /* ---------------- FIREBASE IMPORTS ---------------- */
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
-    import {
-      getFirestore,
-      doc,
-      setDoc,
-      getDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
-      signOut,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+   
 
 
     /* ---------------- FIREBASE CONFIG ---------------- */
@@ -227,7 +219,7 @@
     const db = getFirestore(app);
 
     const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+     const googleProvider = new GoogleAuthProvider();
 
 
     /* ---------------- DIARY VARIABLES ---------------- */
@@ -251,9 +243,24 @@
 
 
     /* ---------------- LOGIN ---------------- */
-    window.login = async function () {
-      await signInWithPopup(auth, provider);
+   window.loginWithGoogle = async function () {
+      try {
+        await signInWithPopup(auth, googleProvider);
+      } catch (error) {
+        alert("Google login failed: " + error.message);
+        console.error(error);
+      }
     };
+
+    window.loginWithGitHub = async function () {
+      try {
+        await signInWithPopup(auth, githubProvider);
+      } catch (error) {
+        alert("GitHub login failed: " + error.message);
+        console.error(error);
+      }
+    };
+
 
 
     /* ---------------- LOGOUT ---------------- */
@@ -265,62 +272,56 @@
     /* ---------------- AUTH STATE ---------------- */
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        userInfo.innerText = "Logged in as: " + user.email;
+        userInfo.innerText = "Logged in as: " + (user.email || user.displayName);
+        entry.disabled = false;
         loadPage();
       } else {
         userInfo.innerText = "Not logged in ❌";
         entry.value = "";
+        entry.disabled = true;
       }
     });
 
 
     /* ---------------- LOAD PAGE ---------------- */
-    async function loadPage() {
-      pageNo.innerText = currentPage;
+   sync function loadPage() {
+      const user = auth.currentUser;
+      if (!user) return;
 
-      const pageRef = doc(db, "diaryPages", "page" + currentPage);
+      pageNo.innerText = currentPage;
+      const pageRef = doc(db, "users", user.uid, "pages", "page" + currentPage);
       const snap = await getDoc(pageRef);
 
       entry.value = snap.exists() ? snap.data().text : "";
     }
 
-
     /* ---------------- SAVE PAGE ---------------- */
     async function savePage() {
       const user = auth.currentUser;
-
       if (!user) {
         alert("Please login first!");
         return;
       }
 
-      const pageRef = doc(db, "diaryPages", "page" + currentPage);
+      const pageRef = doc(db, "users", user.uid, "pages", "page" + currentPage);
+      await setDoc(pageRef, { text: entry.value, updated: new Date().toISOString() });
 
-      await setDoc(pageRef, {
-        text: entry.value,
-        updated: new Date().toISOString()
-      });
-
-      alert("Saved 💖 Shared Diary Updated!");
+      alert("Saved 💖 Diary Updated!");
     }
 
 
     /* ---------------- PAGE NAVIGATION ---------------- */
-    window.nextPage = async function () {
-      if (currentPage < 100) {
-        currentPage++;
-        loadPage();
-      }
+  window.nextPage = async function () {
+      const user = auth.currentUser;
+      if (!user) { alert("Login first!"); return; }
+      if (currentPage < 100) { currentPage++; loadPage(); }
     };
 
     window.prevPage = async function () {
-      if (currentPage > 1) {
-        currentPage--;
-        loadPage();
-      }
+      const user = auth.currentUser;
+      if (!user) { alert("Login first!"); return; }
+      if (currentPage > 1) { currentPage--; loadPage(); }
     };
-
-    window.savePage = savePage;
 
   </script>
 
