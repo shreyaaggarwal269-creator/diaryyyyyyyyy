@@ -139,7 +139,7 @@
 <body>
 
   <!-- COVER -->
-  <div class="cover" id="cover">
+  <div class="cover" id="cover" onclick="document.getElementById('cover').style.display='none'; document.getElementById('container').classList.add('show');">
     <div class="cover-book">
       <img src="https://i.pinimg.com/736x/9f/61/71/9f6171fc7f17b3e4fde6d229834989ca.jpg">
     </div>
@@ -180,7 +180,6 @@
     </div>
   </div>
 
-  <!-- FIREBASE SCRIPT -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -209,28 +208,22 @@
 
     let currentPage = 1;
 
-    // ---------------- OPEN DIARY ----------------
-    document.getElementById("cover").addEventListener("click", () => {
-      document.getElementById("cover").style.display = "none";
-      document.getElementById("container").classList.add("show");
-    });
-
-    // ---------------- LOGIN ----------------
+    // LOGIN
     document.getElementById("googleLogin").addEventListener("click", async () => {
-      try { await signInWithPopup(auth, googleProvider); }
-      catch(e){ alert("Google login failed: " + e.message); console.error(e); }
+      try { await signInWithPopup(auth, googleProvider); } 
+      catch(e){ alert("Google login failed: " + e.message); }
     });
 
     document.getElementById("githubLogin").addEventListener("click", async () => {
-      try { await signInWithPopup(auth, githubProvider); }
-      catch(e){ alert("GitHub login failed: " + e.message); console.error(e); }
+      try { await signInWithPopup(auth, githubProvider); } 
+      catch(e){ alert("GitHub login failed: " + e.message); }
     });
 
     document.getElementById("logoutBtn").addEventListener("click", async () => {
       await signOut(auth);
     });
 
-    // ---------------- AUTH STATE ----------------
+    // AUTH STATE
     onAuthStateChanged(auth, (user) => {
       if(user){
         userInfo.innerText = "Logged in as: " + (user.email || user.displayName);
@@ -243,7 +236,6 @@
       }
     });
 
-    // ---------------- LOAD PAGE ----------------
     async function loadPage(){
       const user = auth.currentUser;
       if(!user) return;
@@ -253,7 +245,6 @@
       entry.value = snap.exists() ? snap.data().text : "";
     }
 
-    // ---------------- SAVE PAGE ----------------
     document.getElementById("savePage").addEventListener("click", async () => {
       const user = auth.currentUser;
       if(!user){ alert("Login first!"); return; }
@@ -262,7 +253,6 @@
       alert("Saved 💖 Diary Updated!");
     });
 
-    // ---------------- PAGE NAVIGATION ----------------
     document.getElementById("nextPage").addEventListener("click", async () => {
       const user = auth.currentUser;
       if(!user){ alert("Login first!"); return; }
@@ -274,6 +264,8 @@
       if(!user){ alert("Login first!"); return; }
       if(currentPage > 1){ currentPage--; loadPage(); }
     });
+
   </script>
+
 </body>
 </html>
