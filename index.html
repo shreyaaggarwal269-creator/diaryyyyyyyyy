@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Our Shared Diary 🤎</title>
-
   <style>
     body {
       margin: 0;
@@ -13,7 +12,7 @@
       overflow: hidden;
     }
 
-    /* ---------- COVER ---------- */
+    /* COVER */
     .cover {
       position: fixed;
       inset: 0;
@@ -50,7 +49,7 @@
       50% { transform: scale(1.05); }
     }
 
-    /* ---------- DIARY ---------- */
+    /* DIARY */
     .container {
       display: flex;
       justify-content: center;
@@ -125,11 +124,10 @@
       cursor: pointer;
       color: white;
       font-size: 14px;
+      margin: 4px 0;
     }
 
-    button:hover {
-      opacity: 0.85;
-    }
+    button:hover { opacity: 0.85; }
 
     #userInfo {
       margin-top: 12px;
@@ -138,19 +136,16 @@
     }
   </style>
 </head>
-
 <body>
 
-  <!-- ========== COVER PAGE ========== -->
-  <div class="cover" onclick="openDiary()">
+  <!-- COVER -->
+  <div class="cover" id="cover">
     <div class="cover-book">
-      <!-- ✅ Cover Image -->
       <img src="https://i.pinimg.com/736x/9f/61/71/9f6171fc7f17b3e4fde6d229834989ca.jpg">
     </div>
   </div>
 
-
-  <!-- ========== DIARY MAIN ========== -->
+  <!-- DIARY -->
   <div class="container" id="container">
     <div class="diary">
 
@@ -159,51 +154,38 @@
         <h2>Our Diary 🤎</h2>
         <p>Secret Shared Pages</p>
 
-        <!-- LOGIN BUTTONS -->
-         <button onclick="loginWithGoogle()">🔐 Login with Google</button>
-        <button onclick="login()">🔐 Login</button>
-        <button onclick="logout()">🚪 Logout</button>
+        <button id="googleLogin">🔐 Login with Google</button>
+        <button id="githubLogin">🐙 Login with GitHub</button>
+        <button id="logoutBtn">🚪 Logout</button>
 
         <p id="userInfo">Not logged in ❌</p>
       </div>
 
-
       <!-- RIGHT PANEL -->
       <div class="right">
-
         <div style="display:flex; justify-content:space-between; color:#8b5e3c;">
           <div id="date"></div>
           <div>Page <span id="pageNo">1</span> / 100</div>
         </div>
 
-        <textarea id="entry" placeholder="Dear diary..."></textarea>
+        <textarea id="entry" placeholder="Dear diary..." disabled></textarea>
 
         <div class="controls">
-          <button onclick="prevPage()">⬅ Prev</button>
-          <button onclick="savePage()">Save 💾</button>
-          <button onclick="nextPage()">Next ➡</button>
+          <button id="prevPage">⬅ Prev</button>
+          <button id="savePage">Save 💾</button>
+          <button id="nextPage">Next ➡</button>
         </div>
-
       </div>
 
     </div>
   </div>
 
-
-  <!-- ✅ FIREBASE SCRIPT -->
+  <!-- FIREBASE SCRIPT -->
   <script type="module">
-
-    /* ---------------- FIREBASE IMPORTS ---------------- */
-
-     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { getAuth, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-
-   
-
-
-    /* ---------------- FIREBASE CONFIG ---------------- */
     const firebaseConfig = {
       apiKey: "AIzaSyCxXIrkw-YRlrV9t-ENXeb02GHq57xcPHo",
       authDomain: "diaryyy-4b4b2.firebaseapp.com",
@@ -213,65 +195,44 @@
       appId: "1:790345621096:web:1927790a4a87c5c72365dd"
     };
 
-
-    /* ---------------- INIT FIREBASE ---------------- */
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     const auth = getAuth(app);
-     const googleProvider = new GoogleAuthProvider();
-
-
-    /* ---------------- DIARY VARIABLES ---------------- */
-    let currentPage = 1;
+    const googleProvider = new GoogleAuthProvider();
+    const githubProvider = new GithubAuthProvider();
 
     const entry = document.getElementById("entry");
     const pageNo = document.getElementById("pageNo");
     const userInfo = document.getElementById("userInfo");
+    const dateEl = document.getElementById("date");
+    dateEl.innerText = new Date().toDateString();
 
+    let currentPage = 1;
 
-    /* ---------------- SHOW DATE ---------------- */
-    document.getElementById("date").innerText =
-      new Date().toDateString();
-
-
-    /* ---------------- OPEN DIARY ---------------- */
-    window.openDiary = function () {
-      document.querySelector(".cover").style.display = "none";
+    // ---------------- OPEN DIARY ----------------
+    document.getElementById("cover").addEventListener("click", () => {
+      document.getElementById("cover").style.display = "none";
       document.getElementById("container").classList.add("show");
-    };
+    });
 
+    // ---------------- LOGIN ----------------
+    document.getElementById("googleLogin").addEventListener("click", async () => {
+      try { await signInWithPopup(auth, googleProvider); }
+      catch(e){ alert("Google login failed: " + e.message); console.error(e); }
+    });
 
-    /* ---------------- LOGIN ---------------- */
-   window.loginWithGoogle = async function () {
-      try {
-        await signInWithPopup(auth, googleProvider);
-      } catch (error) {
-        alert("Google login failed: " + error.message);
-        console.error(error);
-      }
-    };
+    document.getElementById("githubLogin").addEventListener("click", async () => {
+      try { await signInWithPopup(auth, githubProvider); }
+      catch(e){ alert("GitHub login failed: " + e.message); console.error(e); }
+    });
 
-    window.loginWithGitHub = async function () {
-      try {
-        await signInWithPopup(auth, githubProvider);
-      } catch (error) {
-        alert("GitHub login failed: " + error.message);
-        console.error(error);
-      }
-    };
-
-
-
-    /* ---------------- LOGOUT ---------------- */
-    window.logout = async function () {
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
       await signOut(auth);
-    };
+    });
 
-
-    /* ---------------- AUTH STATE ---------------- */
+    // ---------------- AUTH STATE ----------------
     onAuthStateChanged(auth, (user) => {
-      if (user) {
+      if(user){
         userInfo.innerText = "Logged in as: " + (user.email || user.displayName);
         entry.disabled = false;
         loadPage();
@@ -282,48 +243,37 @@
       }
     });
 
-
-    /* ---------------- LOAD PAGE ---------------- */
-   sync function loadPage() {
+    // ---------------- LOAD PAGE ----------------
+    async function loadPage(){
       const user = auth.currentUser;
-      if (!user) return;
-
+      if(!user) return;
       pageNo.innerText = currentPage;
       const pageRef = doc(db, "users", user.uid, "pages", "page" + currentPage);
       const snap = await getDoc(pageRef);
-
       entry.value = snap.exists() ? snap.data().text : "";
     }
 
-    /* ---------------- SAVE PAGE ---------------- */
-    async function savePage() {
+    // ---------------- SAVE PAGE ----------------
+    document.getElementById("savePage").addEventListener("click", async () => {
       const user = auth.currentUser;
-      if (!user) {
-        alert("Please login first!");
-        return;
-      }
-
+      if(!user){ alert("Login first!"); return; }
       const pageRef = doc(db, "users", user.uid, "pages", "page" + currentPage);
       await setDoc(pageRef, { text: entry.value, updated: new Date().toISOString() });
-
       alert("Saved 💖 Diary Updated!");
-    }
+    });
 
-
-    /* ---------------- PAGE NAVIGATION ---------------- */
-  window.nextPage = async function () {
+    // ---------------- PAGE NAVIGATION ----------------
+    document.getElementById("nextPage").addEventListener("click", async () => {
       const user = auth.currentUser;
-      if (!user) { alert("Login first!"); return; }
-      if (currentPage < 100) { currentPage++; loadPage(); }
-    };
+      if(!user){ alert("Login first!"); return; }
+      if(currentPage < 100){ currentPage++; loadPage(); }
+    });
 
-    window.prevPage = async function () {
+    document.getElementById("prevPage").addEventListener("click", async () => {
       const user = auth.currentUser;
-      if (!user) { alert("Login first!"); return; }
-      if (currentPage > 1) { currentPage--; loadPage(); }
-    };
-
+      if(!user){ alert("Login first!"); return; }
+      if(currentPage > 1){ currentPage--; loadPage(); }
+    });
   </script>
-
 </body>
 </html>
